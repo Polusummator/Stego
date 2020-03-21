@@ -1,6 +1,6 @@
 """
 This program is an implementation of the LSB steganographic method in the Python programming language using the PyQt5 GUI
-
+github: https://github.com/Polusummator/Stego
 """
 import hashlib
 import os
