@@ -638,19 +638,19 @@ class Steganography(QMainWindow):
         :param btn: button-object
         """
         if btn == self.tabwidget.tab1.groupbox1.but1:
-            filename = QFileDialog.getOpenFileName(self, "Choose a file", ".", "BMP Files(*.bmp);;PNG Files(*.png);;JPEG Files(*.jpeg);;JPG Files(*.jpg)")[0]
+            filename = QFileDialog.getOpenFileName(self, "Choose a file", ".", "All Files (*.bmp; *.png; *.jpeg; *.jpg);;BMP Files(*.bmp);;PNG Files(*.png);;JPEG Files(*.jpeg);;JPG Files(*.jpg)")[0]
             self.tabwidget.tab1.groupbox1.edit1.setText(filename)
         elif btn == self.tabwidget.tab2.groupbox1.but1:
             filename = QFileDialog.getOpenFileName(self, "Choose a file", ".", "BMP Files(*.bmp)")[0]
             self.tabwidget.tab2.groupbox1.edit1.setText(filename)
         elif btn == self.tabwidget.tab1.groupbox1.but2:
-            filename = QFileDialog.getOpenFileName(self, "Choose a file", ".", "Text Files (*.txt);")[0]
+            filename = QFileDialog.getOpenFileName(self, "Choose a file", ".", "Text Files (*.txt)")[0]
             self.tabwidget.tab1.groupbox1.edit2.setText(filename)
         elif btn == self.tabwidget.tab2.groupbox2.but1:
-            filename = QFileDialog.getOpenFileName(self, "Choose a file", ".", "Text Files (*.txt);")[0]
+            filename = QFileDialog.getOpenFileName(self, "Choose a file", ".", "Text Files (*.txt)")[0]
             self.tabwidget.tab2.groupbox2.edit1.setText(filename)
         elif btn == self.tabwidget.tab2.groupbox2.but2:
-            filename = QFileDialog.getOpenFileName(self, "Choose a file", ".", "Text Files (*.txt);")[0]
+            filename = QFileDialog.getOpenFileName(self, "Choose a file", ".", "Text Files (*.txt)")[0]
             self.tabwidget.tab2.groupbox2.edit2.setText(filename)
 
     def closeEvent(self, event):
