@@ -1,8 +1,7 @@
 """
 This program is an implementation of the LSB steganographic method in the Python programming language using the PyQt5 GUI
 github: https://github.com/Polusummator/Stego
-
-
+TODO: design WAITING
 """
 import hashlib
 import os
@@ -38,7 +37,7 @@ class Steganography(QMainWindow):
     my_signal1 = pyqtSignal(list, name='my_signal1')  # stego
     my_signal2 = pyqtSignal(str, name='my_signal2')   # unstego
     my_signal3 = pyqtSignal(list, name='my_signal3')  # PRNG
-    my_signal4 = pyqtSignal(name='my_signal4')        # show_rgb
+    #my_signal4 = pyqtSignal(name='my_signal4')        # show_rgb
 
     def __init__(self):
         """
@@ -47,6 +46,8 @@ class Steganography(QMainWindow):
         super().__init__()
         self.showImage = False
         self.showBits = False
+        self.showPixE = False
+        self.showPixD = False
         self.initUI()
 
     def center(self):
@@ -62,7 +63,7 @@ class Steganography(QMainWindow):
         """
         Creating GUI
         """
-        self.setFixedSize(569, 450)
+        self.setFixedSize(569, 490)
         self.center()
         self.setWindowTitle('Steganography')
 
@@ -134,13 +135,15 @@ class Steganography(QMainWindow):
 
         self.tabwidget.tab1.groupbox2.check1.stateChanged.connect(self.checkbox1)
         self.tabwidget.tab1.groupbox2.check2.stateChanged.connect(self.checkbox2)
+        self.tabwidget.tab1.groupbox2.check3.stateChanged.connect(self.checkbox3E)
+        self.tabwidget.tab2.groupCheck.check.stateChanged.connect(self.checkbox3D)
 
         # ------------------------Signals--------------------------
 
         self.my_signal1.connect(self.mySignalHandler1, Qt.QueuedConnection)
         self.my_signal2.connect(self.mySignalHandler2, Qt.QueuedConnection)
         self.my_signal3.connect(self.mySignalHandler3, Qt.QueuedConnection)
-        self.my_signal4.connect(self.mySignalHandler4, Qt.QueuedConnection)
+        #self.my_signal4.connect(self.mySignalHandler4, Qt.QueuedConnection)
 
     def mySignalHandler1(self, img):
         """
@@ -198,6 +201,26 @@ class Steganography(QMainWindow):
         else:
             self.showBits = False
 
+    def checkbox3E(self, state):
+        """
+        Processing a check2 (self.tabwidget.tab1.groupbox2.check3) change
+        :param state: the state of checkbox
+        """
+        if state == Qt.Checked:
+            self.showPixE = True
+        else:
+            self.showPixE = False
+
+    def checkbox3D(self, state):
+        """
+        Processing a check2 (self.tabwidget.tab2.groupCheck.check) change
+        :param state: the state of checkbox
+        """
+        if state == Qt.Checked:
+            self.showPixD = True
+        else:
+            self.showPixD = False
+
     def ProgressE(self, num):
         """
         Changing the progress bar value (encryption)
@@ -244,8 +267,7 @@ class Steganography(QMainWindow):
             self.H()
             self.len_prng = len(prng)
             for i in prng:
-                i1, j1 = (i + image.size[1] - 1) // image.size[1] - 1, (image.size[1] - 1, i % image.size[1])[
-                    bool(i % image.size[1])]
+                i1, j1 = (i + image.size[1] - 1) // image.size[1] - 1, (image.size[1] - 1, i % image.size[1])[bool(i % image.size[1])]
                 pixel = image.getpixel((i1, j1))
                 R, G, B = pixel
                 cur = text[text_i]
@@ -349,6 +371,7 @@ class Steganography(QMainWindow):
             random.seed(rand_seed)
             random.shuffle(all_list)
             PRNG_list = all_list[:number]
+            self.prng = PRNG_list
             if z:
                 signal.emit(['e'] + PRNG_list)
             else:
@@ -454,9 +477,29 @@ class Steganography(QMainWindow):
                     b = 1
                 img.putpixel((i, j), (255 * r, 255 * g, 255 * b))
         img.show()
-        self.inactive(True)
+        if self.showPixE:
+            self.show_pix('e')
+        else:
+            self.closeContainer()
+            self.H()
+            self.inactive(True)
+
+    @thread
+    def show_pix(self, mode):
+        if (not self.showBits and mode == 'e') or mode == 'd':
+            self.H()
+        img = self.container
+        prng = self.prng
+        w, h = img.size[0], img.size[1]
+        used_pix = Image.new('RGB', (w, h), (255, 255, 255))
+        for i in prng:
+            i1, j1 = (i + h - 1) // h - 1, (h - 1, i % h)[bool(i % h)]
+            used_pix.putpixel((i1, j1), (0, 0, 0))
         self.H()
         self.closeContainer()
+        used_pix.show()
+        used_pix.close()
+        self.inactive(True)
 
     def main(self, mode, a1, a2):
         """
@@ -570,6 +613,8 @@ class Steganography(QMainWindow):
         private_file.close()
         if self.showBits:
             self.show_rgb(image_stego)
+        elif self.showPixE:
+            self.show_pix('e')
         else:
             self.container.close()
 
@@ -615,11 +660,14 @@ class Steganography(QMainWindow):
         if not os.path.isdir(pathSaveDir):
             os.mkdir(pathSaveDir)
         fileName = '/StegoText.txt'
-        self.container.close()
         message_file = open(pathSaveDir + fileName, 'w', encoding='ascii')
         message = message.encode('ascii', 'ignore').decode('ascii')
         message_file.write(message)
         message_file.close()
+        if self.showPixD:
+            self.show_pix('d')
+        else:
+            self.container.close()
 
     def getDirectory(self, btn):
         """
@@ -781,12 +829,22 @@ class TabWidget(QWidget):
         self.tab2.dialog = QDialogButtonBox(self)
         self.tab2.dialog.setStandardButtons(QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
 
+        # -----------------------CheckBox--------------------------
+
+        self.tab2.groupCheck = QGroupBox(self)
+        self.tab2.groupCheck.setTitle('Options')
+        self.tab2.groupCheck.hlayoutCheck = QHBoxLayout(self)
+        self.tab2.groupCheck.check = QCheckBox('Show used bits', self)
+        self.tab2.groupCheck.hlayoutCheck.addWidget(self.tab2.groupCheck.check)
+        self.tab2.groupCheck.setLayout(self.tab2.groupCheck.hlayoutCheck)
+
         self.tab2.hlayout.addWidget(self.tab2.pbar)
         self.tab2.hlayout.addStretch()
         self.tab2.hlayout.addWidget(self.tab2.dialog)
 
         self.tab2.layout.addWidget(self.tab2.groupbox1)
         self.tab2.layout.addWidget(self.tab2.groupbox2)
+        self.tab2.layout.addWidget(self.tab2.groupCheck)
         self.tab2.layout.addWidget(self.tab2.groupbox3)
         self.tab2.layout.addStretch()
         self.tab2.layout.addLayout(self.tab2.hlayout)
@@ -826,6 +884,7 @@ class TabWidget(QWidget):
 
         self.tab1.dialog.setEnabled(mode)
         self.tab2.dialog.setEnabled(mode)
+        self.tab2.groupCheck.check.setEnabled(mode)
         self.tab1.setEnabled(mode)
         self.tab2.setEnabled(mode)
 
@@ -908,9 +967,11 @@ class Group2(QGroupBox):
 
         self.check1 = QCheckBox('Show image', self)
         self.check2 = QCheckBox('Show least significant bits', self)
+        self.check3 = QCheckBox('Show used pixels', self)
 
         self.layout.addWidget(self.check1)
         self.layout.addWidget(self.check2)
+        self.layout.addWidget(self.check3)
 
         self.setTitle('Options')
 
@@ -923,6 +984,7 @@ class Group2(QGroupBox):
         """
         self.check1.setEnabled(mode)
         self.check2.setEnabled(mode)
+        self.check3.setEnabled(mode)
 
 
 class Group3(QGroupBox):
